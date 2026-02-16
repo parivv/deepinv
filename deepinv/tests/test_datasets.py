@@ -1309,3 +1309,42 @@ def test_RandomPatchSampler(make_data):
     assert len(ds) == 2
     x, y = next(iter(ds))
     assert math.isnan(x)
+
+#TESTS FOR PATCH_DATASET
+def test_length():
+   #make image, where B =2, C = 3, and Height=width=8
+   img = torch.randn(2, 3, 8, 8)
+   dataset = PatchDataset(img, patch_size=4, stride = 4)
+   #total patches = B*4 = 8
+   assert len(dataset) == 8
+
+
+def test_default_shape():
+   #tests default shape is (-1,) and __getItem__
+   # make image, where B =2, C = 3, and Height=width=8
+   img = torch.randn(2, 3, 8, 8)
+   dataset = PatchDataset(img, patch_size=3, stride = 3)
+   item = dataset[0]
+   #(-1,) means image haas been flattened
+   assert item.ndim == 1
+   assert item.shape[0] == 3*3*3
+
+
+def test_no_shape():
+   #if shape = none, return C*height*width
+   img = torch.randn(1, 6, 7, 7)
+   dataset = PatchDataset(img, patch_size=4, stride = 4, shape=None)
+   item = dataset[0]
+   assert item.shape == (6, 4, 4)
+
+
+#HELPER FUNCTION FOR TEST_TRANSFORMATIONS
+def transform(x):
+   return x * 2
+
+
+def test_transformations():
+   img = torch.ones(1, 1, 7, 7)
+   dataset = PatchDataset(img, patch_size=4, stride=4, transform=transform, shape=None)
+   item = dataset[0]
+   assert torch.equal(item, torch.full_like(item, 2))
